@@ -70,8 +70,29 @@ class Ensayo(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     modificado_en = models.DateTimeField(auto_now=True)
 
+    ESTADOS = [
+        ('PENDIENTE', 'Pendiente'),
+        ('EN_PROCESO', 'En Proceso'),
+        ('FINALIZADO', 'Finalizado'),
+        ('VALIDADO', 'Validado'),
+    ]
+
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
+
     def __str__(self):
         return f"{self.tipo.nombre} - {self.muestra.codigo}"
+
+    def puede_editar(self, usuario):
+        if self.estado == 'VALIDADO':
+            return False
+        
+        if usuario.groups.filter(name='Admin').exists():
+            return False
+        
+        return True
+
+    def puede_validar(self, usuario):        
+        return usuario.groups.filter(name='Admin').exists()
     
     class Meta:
         verbose_name = "Ensayo"

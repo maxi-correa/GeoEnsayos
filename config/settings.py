@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-+aaity8k_8=$uquh5u77yq2fw94b!m7kv*4mvf2wyg7xpmzxh7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,7 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'ensayos',
+    'interfaz',
 ]
+
+# Redirigir al dashboard después de iniciar sesión
+
+LOGIN_REDIRECT_URL = 'dashboard_tecnico'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -56,7 +61,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
