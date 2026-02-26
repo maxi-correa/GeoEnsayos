@@ -42,9 +42,9 @@ INSTALLED_APPS = [
     'interfaz',
 ]
 
-# Redirigir al dashboard después de iniciar sesión
-
-LOGIN_REDIRECT_URL = 'dashboard_tecnico'
+# Redirigir al login después de iniciar sesión o cuando no se está autenticado
+LOGIN_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = 'login'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -70,30 +70,52 @@ class Ensayo(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     modificado_en = models.DateTimeField(auto_now=True)
 
+    # Constantes
+    ESTADO_PENDIENTE = 'PENDIENTE'
+    ESTADO_EN_PROCESO = 'EN_PROCESO'
+    ESTADO_FINALIZADO = 'FINALIZADO'
+    ESTADO_VALIDADO = 'VALIDADO'
+    
     ESTADOS = [
-        ('PENDIENTE', 'Pendiente'),
-        ('EN_PROCESO', 'En Proceso'),
-        ('FINALIZADO', 'Finalizado'),
-        ('VALIDADO', 'Validado'),
+        (ESTADO_PENDIENTE, 'Pendiente'),
+        (ESTADO_EN_PROCESO, 'En Proceso'),
+        (ESTADO_FINALIZADO, 'Finalizado'),
+        (ESTADO_VALIDADO, 'Validado'),
     ]
 
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
+    # Transiciones permitidas
+    TRANSICIONES = {
+        ESTADO_PENDIENTE: [ESTADO_EN_PROCESO],
+        ESTADO_EN_PROCESO: [ESTADO_FINALIZADO],
+        ESTADO_FINALIZADO: [ESTADO_EN_PROCESO, ESTADO_VALIDADO],
+        ESTADO_VALIDADO: []
+    }
+
+    estado = models.CharField(max_length=20, choices=ESTADOS, default=ESTADO_PENDIENTE)
 
     def __str__(self):
         return f"{self.tipo.nombre} - {self.muestra.codigo}"
-
-    def puede_editar(self, usuario):
-        if self.estado == 'VALIDADO':
-            return False
-        
-        if usuario.groups.filter(name='Admin').exists():
-            return False
-        
-        return True
-
-    def puede_validar(self, usuario):        
-        return usuario.groups.filter(name='Admin').exists()
     
+    def puede_transicionar_a(self, nuevo_estado):
+        """
+        Solo verifica si la transición es válida
+        desde el punto de vista estructural.
+        """
+        return nuevo_estado in self.TRANSICIONES.get(self.estado, [])
+
+    def cambiar_estado(self, nuevo_estado):
+        """
+        Cambia el estado si la transición es válida.
+        NO valida permisos de usuario.
+        """
+        if nuevo_estado == self.ESTADO_VALIDADO:
+            if not self.puede_transicionar_a(nuevo_estado):
+                raise ValueError(f"No se puede cambiar de {self.estado} a {nuevo_estado}")
+
+        # Aplicar cambio
+        self.estado = nuevo_estado
+        self.save() # Guarda el cambio de estado
+
     class Meta:
         verbose_name = "Ensayo"
         verbose_name_plural = "Ensayos"
