@@ -1,11 +1,15 @@
 from django.contrib import admin
 from .models import (
-    Obra, 
+    Contratista,
+    Cantera,
+    Obra,
     Muestra,
     TipoEnsayo,
     Ensayo,
     EnsayoGranulometria,
     ResultadoTamiz,
+    ProctorReferencia,
+    EnsayoDensidad,
     )
 
 # Register your models here.
@@ -39,7 +43,11 @@ class MuestraAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
 
+admin.site.register(Contratista)
+admin.site.register(Cantera)
 admin.site.register(TipoEnsayo)
 admin.site.register(Ensayo)
 admin.site.register(EnsayoGranulometria)
 admin.site.register(ResultadoTamiz)
+admin.site.register(ProctorReferencia)
+admin.site.register(EnsayoDensidad)

@@ -43,7 +43,7 @@ INSTALLED_APPS = [
 ]
 
 # Redirigir al login después de iniciar sesión o cuando no se está autenticado
-LOGIN_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'login'
 
 MIDDLEWARE = [

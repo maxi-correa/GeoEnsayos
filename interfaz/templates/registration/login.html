@@ -16,16 +16,26 @@
             <div class="mb-3">
                 <label class="form-label">Usuario</label>
                 {{ form.username }}
+                {% if form.username.errors %}
+                <div class="text-danger small">
+                    {{ form.username.errors.0 }}
+                </div>
+                {% endif %}
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Contraseña</label>
                 {{ form.password }}
+                {% if form.password.errors %}
+                <div class="text-danger small">
+                    {{ form.password.errors.0 }}
+                </div>
+                {% endif %}
             </div>
 
-            {% if form.errors %}
+            {% if form.non_field_errors %}
                 <div class="alert alert-danger">
-                    Usuario o contraseña incorrectos.
+                    {{ form.non_field_errors.0 }}
                 </div>
             {% endif %}
 

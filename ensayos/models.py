@@ -16,12 +16,39 @@ class Contratista(models.Model):
         verbose_name = "Contratista"
         verbose_name_plural = "Contratistas"
 
-class Obra(models.Model):
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
+class Cantera(models.Model):
     nombre = models.CharField(max_length=200)
+    ubicacion = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return self.nombre
+    
+    class Meta:
+        verbose_name = "Cantera"
+        verbose_name_plural = "Canteras"
+
+class Obra(models.Model):
+    TIPO_LICITACION_PUBLICA = 'LP'
+    TIPO_LICITACION_PRIVADA = 'LR'
+    TIPO_CONCURSO_PRIVADO = 'CP'
+    TIPO_CONTRATACION_DIRECTA = 'CD'
+
+    TIPO_CONTRATACION = [
+        (TIPO_LICITACION_PUBLICA, 'Licitación Pública'),
+        (TIPO_LICITACION_PRIVADA, 'Licitación Privada'),
+        (TIPO_CONCURSO_PRIVADO, 'Concurso Privado'),
+        (TIPO_CONTRATACION_DIRECTA, 'Contratación Directa'),
+    ]
+    
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
+    nombre = models.CharField(max_length=200, unique=True)
+    numero_expediente = models.CharField(max_length=50, help_text="Ej: 3062-M-2025", blank=True, unique=True)
+    tipo_contratacion = models.CharField(max_length=2, choices=TIPO_CONTRATACION, blank=True)
+    numero_licitacion = models.CharField(max_length=50, blank=True, help_text="Ej: 30/2025 SIOySP", unique=True)
     ubicacion = models.CharField(max_length=200, blank=True)
     contratista = models.ForeignKey(Contratista, on_delete=models.SET_NULL, null=True, blank=True)
     fecha_inicio = models.DateField(blank=True, null=True)
+    cantera = models.ManyToManyField(Cantera, related_name="obras", blank=True)
     activa = models.BooleanField(default=True)
 
     tecnicos = models.ManyToManyField(User, blank=True, related_name='obras_asignadas') #Permite asignar técnicos a una obra
@@ -29,16 +56,32 @@ class Obra(models.Model):
     def __str__(self):
         return self.nombre
     
+    def tiene_ensayos(self):
+        return self.muestra_set.filter(ensayos__isnull=False).exists()
+    
     class Meta:
         verbose_name = "Obra"
         verbose_name_plural = "Obras"
 
+
 class Muestra(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE)
-    codigo = models.CharField(max_length=100)
+    cantera = models.ForeignKey(Cantera, on_delete=models.PROTECT, null=True, blank=True)
+
+    # Constantes
+    PROCEDENCIA_CANTERA = 'CANTERA'
+    PROCEDENCIA_ACOPIO = 'ACOPIO'
+
+    PROCEDENCIAS = [
+        (PROCEDENCIA_CANTERA, 'Cantera'),
+        (PROCEDENCIA_ACOPIO, 'Acopio en obra'),
+    ]
+
+    procedencia = models.CharField(max_length=10, choices=PROCEDENCIAS)
     descripcion = models.TextField(blank=True)
     fecha_toma = models.DateField(blank=True, null=True)
     recibida_en_laboratorio = models.DateField(blank=True, null=True)
+    codigo = models.CharField(max_length=100)
     activa = models.BooleanField(default=True)
 
     def __str__(self):
@@ -131,3 +174,27 @@ class ResultadoTamiz(models.Model):
     ensayo_granulometria = models.ForeignKey(EnsayoGranulometria, on_delete=models.CASCADE, related_name='resultados')
     tamiz = models.CharField(max_length=50)
     peso_retenido = models.DecimalField(max_digits=10, decimal_places=2)
+
+class ProctorReferencia(models.Model):
+    """""
+    Este es el Proctor como referencia de cantera
+    (cuando no es Proctor como ensayo normal)
+    """""
+    cantera = models.ForeignKey(Cantera, on_delete=models.CASCADE, related_name="proctores")
+    fecha = models.DateField()
+    densidad_maxima = models.DecimalField(max_digits=10, decimal_places=2)
+    humedad_optima = models.DecimalField(max_digits=10, decimal_places=2)
+    vigente = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.cantera.nombre} - {self.fecha}"
+    
+class EnsayoDensidad(models.Model):
+    obra = models.ForeignKey(Obra, on_delete=models.CASCADE)
+    cantera = models.ForeignKey(Cantera, on_delete=models.PROTECT)
+
+    fecha = models.DateField()
+
+    densidad_obtenida = models.DecimalField(max_digits=10, decimal_places=2)
+
+    proctor_referencia = models.ForeignKey(ProctorReferencia, on_delete=models.SET_NULL, null=True, blank=True)
