@@ -42,6 +42,11 @@
                     ➕ Crear Obra
                 </a>
                 </li>
+                <li class="nav-item">
+                    <a class="btn btn-primary btn-sm me-2" href="{% url 'lista_contratistas' %}">
+                        🏢 Contratistas
+                    </a>
+                </li>
             </ul>
 
             <ul class="navbar-nav ms-auto">
@@ -80,7 +85,11 @@
             <hr class="border-light">
 
             <a href="{% url 'crear_obra' %}" class="btn btn-success w-100 mb-3">
-            ➕ Crear Obra
+                ➕ Crear Obra
+            </a>
+
+            <a href="{% url 'lista_contratistas' %}" class="btn btn-primary w-100 mb-3">
+                🏢 Contratistas
             </a>
 
             <form method="post" action="{% url 'logout' %}">

@@ -38,55 +38,32 @@
 
 {% block scripts %}
 <script>
-    //SCRIPT PARA FORMATEAR EL NÚMERO DE EXPEDIENTE EN TIEMPO REAL
+document.addEventListener("DOMContentLoaded", function() {
 
-    document.addEventListener("DOMContentLoaded", function() {
+    // ===== NOMBRE EN MAYÚSCULAS EN TIEMPO REAL =====
+    const nombreInput = document.getElementById("id_nombre");
 
-        const expedienteInput = document.getElementById("id_numero_expediente");
-
-        expedienteInput.addEventListener("input", function(e) {
-
-            let value = this.value.replace(/\D/g, "");
-
-            if (value.length > 12) {
-                value = value.slice(0, 12);
-            }
-
-            let formatted = "";
-
-            if (value.length > 0) {
-                formatted += value.substring(0, 4);
-            }
-            if (value.length >= 5) {
-                formatted += " - " + value.substring(4, 8);
-            }
-            if (value.length >= 9) {
-                formatted += " - " + value.substring(8, 12);
-            }
-
-            this.value = formatted;
+    if (nombreInput) {
+        nombreInput.addEventListener("input", function() {
+            this.value = this.value.toUpperCase();
         });
-    });
+    }
+});
 </script>
 
 <script>
-    // SCRIPT PARA FORMATEAR EL NÚMERO DE LICITACIÓN EN TIEMPO REAL
+// ===== NÚMERO DE EXPEDIENTE =====
+// Formato: 3052-M-2026
 
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() {
 
-        const licInput = document.getElementById("id_numero_licitacion");
+    const expedienteInput = document.getElementById("id_numero_expediente");
 
-        licInput.addEventListener("input", function(e) {
-
-            let value = this.value.replace(/\D/g, "");
-
-            if (value.length > 6) {
-                value = value.slice(0, 6);
-            }
-
-            this.value = value + "/2025-SIOySP";
-        });
-
-    });
+    if (expedienteInput){
+        expedienteInput.addEventListener("input", function() {
+            this.value = this.value.toUpperCase();
+        })
+    }
+});
 </script>
 {% endblock %}

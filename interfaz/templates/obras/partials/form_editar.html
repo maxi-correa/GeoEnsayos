@@ -1,0 +1,13 @@
+<form method="post" id="formEditar">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <div class="text-end">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+        </button>
+        <button type="submit" class="btn btn-warning">
+            Guardar cambios
+        </button>
+    </div>
+</form>

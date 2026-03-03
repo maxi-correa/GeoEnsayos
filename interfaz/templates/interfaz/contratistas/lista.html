@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Contratistas</h2>
+        <a href="#" class="btn btn-success">
+            ➕ Crear Contratista
+        </a>
+    </div>
+
+    <div class="row">
+        {% for contratista in page_obj %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">
+                        {{ contratista.nombre }}
+                    </h5>
+
+                    <p class="mb-1"><strong>CUIT:</strong> {{ contratista.cuit }}</p>
+                    <p class="mb-1"><strong>Contacto:</strong> {{ contratista.contacto }}</p>
+                    <!--
+                    <p class="mb-1"><strong>Dirección:</strong> {{ contratista.direccion }}</p>
+                    <p class="mb-1"><strong>Email:</strong> {{ contratista.email }}</p>
+                    <p class="mb-1"><strong>Teléfono:</strong> {{ contratista.telefono }}</p>
+                    -->
+                    {% if contratista.activo %}
+                        <span class="badge bg-success">Activo</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inactivo</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer bg-white border-0 text-end">
+                    <a href="#" 
+                        class="btn btn-sm btn-outline-warning">
+                        ✏ Editar
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+</div>
+{% endblock %}
