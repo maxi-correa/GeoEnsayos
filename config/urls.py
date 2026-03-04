@@ -17,7 +17,8 @@ Including another URLconf
 from django.shortcuts import redirect
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 from interfaz.views import CustomLoginView
 from interfaz.forms import LoginForm
 from interfaz.utils import obtener_dashboard_por_rol
@@ -33,4 +34,4 @@ urlpatterns = [
     path('login/', CustomLoginView.as_view(authentication_form=LoginForm), name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', include('interfaz.urls')),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

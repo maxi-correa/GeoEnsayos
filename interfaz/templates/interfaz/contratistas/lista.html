@@ -1,11 +1,48 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    .logo-container {
+        position: relative;
+    }
+
+    .logo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 140px;
+        background: rgba(0,0,0,0.55);
+        opacity: 0;
+        transition: 0.3s;
+        border-radius: 8px;
+    }
+
+    .logo-container:hover .logo-overlay {
+        opacity: 1;
+    }
+
+    .logo-img {
+        border-radius: 8px;
+    }
+    .upload-box {
+        border: 2px dashed #ffc107; /* amarillo bootstrap */
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+
+    .upload-box:hover {
+        background-color: #fff3cd;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Contratistas</h2>
-        <a href="#" class="btn btn-success">
+        <a href="{% url 'crear_contratista'%}" class="btn btn-success">
             ➕ Crear Contratista
         </a>
     </div>
@@ -16,18 +53,55 @@
             <div class="card shadow-sm h-100">
 
                 <div class="card-body">
+                    
+                    {% if contratista.logo %}
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <!-- Imagen descargable -->
+                        <a href="{{ contratista.logo.url }}" download>
+                        <img src="{{ contratista.logo.url }}" class="img-fluid logo-img" style="max-height:120px; object-fit:contain;" alt="Logo de {{ contratista.nombre }}">
+                        </a>
+
+                        <div class="d-flex flex-column gap-2">
+                        <!-- Botón cambiar -->
+                        <form method="post" action="{% url 'subir_logo_contratista' contratista.id %}" enctype="multipart/form-data">
+
+                            {% csrf_token %}
+                            <label class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
+                                Cambiar logo
+                                <input type="file" name="logo" accept="image/*" hidden onchange="this.form.submit()">
+                            </label>
+                        </form>
+
+                        <!-- Botón eliminar -->
+                        <form method="post"
+                            action="{% url 'eliminar_logo_contratista' contratista.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar el logo?');">
+                                Eliminar logo
+                            </button>
+                        </form>
+                        </div>
+                    </div>
+                    {% else %}
+                    <form method="post" action="{% url 'subir_logo_contratista' contratista.pk %}" enctype="multipart/form-data">
+                        
+                        {% csrf_token %}
+                        <label class="upload-box w-100 d-flex justify-content-center align-items-center" style="height: 100px; cursor:pointer;">
+                            <input type="file" name="logo" accept="image/*" hidden onchange="this.form.submit()">
+                            <i class="bi bi-plus-lg" style="font-size: 40px;"></i>
+                        </label>
+                    </form>
+                    {% endif %}
+
                     <h5 class="card-title fw-bold">
                         {{ contratista.nombre }}
                     </h5>
 
                     <p class="mb-1"><strong>CUIT:</strong> {{ contratista.cuit }}</p>
-                    <p class="mb-1"><strong>Contacto:</strong> {{ contratista.contacto }}</p>
-                    <!--
                     <p class="mb-1"><strong>Dirección:</strong> {{ contratista.direccion }}</p>
                     <p class="mb-1"><strong>Email:</strong> {{ contratista.email }}</p>
                     <p class="mb-1"><strong>Teléfono:</strong> {{ contratista.telefono }}</p>
-                    -->
-                    {% if contratista.activo %}
+                    {% if contratista.activa %}
                         <span class="badge bg-success">Activo</span>
                     {% else %}
                         <span class="badge bg-danger">Inactivo</span>
@@ -35,7 +109,7 @@
                 </div>
 
                 <div class="card-footer bg-white border-0 text-end">
-                    <a href="#" 
+                    <a href="{% url 'editar_contratista' contratista.id %}" 
                         class="btn btn-sm btn-outline-warning">
                         ✏ Editar
                     </a>

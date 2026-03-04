@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from ensayos.models import Obra
+from ensayos.models import Obra, Contratista
 import re
 
 
@@ -92,3 +92,41 @@ class ObraForm(forms.ModelForm):
             raise ValidationError("Ya existe una obra con este número de licitación.")
         
         return licitacion
+    
+class ContratistaForm(forms.ModelForm):
+    class Meta:
+        model = Contratista
+        fields = ['nombre', 'cuit', 'direccion', 'email', 'telefono', 'logo', 'activa']
+
+        def clean_nombre(self):
+            nombre = self.cleaned_data['nombre'].upper()
+
+            qs = Contratista.objects.filter(nombre__iexact=nombre)
+
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            if qs.exists():
+                raise ValidationError("Ya existe un contratista con este nombre.")
+            
+            return nombre
+        
+        def clean_cuit(self):
+            cuit = self.cleaned_data['cuit']
+
+            if not cuit:
+                return cuit  # Permitir campo vacío
+
+            # Validar formato de CUIT (11 dígitos)
+            if not re.match(r'^\d{11}$', cuit):
+                raise ValidationError("El CUIT debe tener 11 dígitos.")
+
+            qs = Contratista.objects.filter(cuit=cuit)
+
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            if qs.exists():
+                raise ValidationError("Ya existe un contratista con este CUIT.")
+            
+            return cuit

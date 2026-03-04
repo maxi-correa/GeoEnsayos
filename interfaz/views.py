@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.db.models import Count
 from ensayos.models import Ensayo, Obra, Contratista
-from .forms import ObraForm
+from .forms import ObraForm, ContratistaForm
 from ensayos.permissions import ensayos_visibles_para
 from .decorators import rol_requerido
 from .utils import obtener_dashboard_por_rol
@@ -112,7 +112,62 @@ def lista_contratistas(request):
     return render(request, "interfaz/contratistas/lista.html", {
         "page_obj": page_obj
     })
-    
 
+@login_required
+@rol_requerido("admin")
+def crear_contratista(request):
+    if request.method == "POST":
+        form = ContratistaForm(request.POST)
 
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Contratista creado correctamente.")
+            return redirect('lista_contratistas')
+    else:
+        form = ContratistaForm() #Acá se instancia el form vacío para mostrarlo en la plantilla
+        
+    return render(request, 'interfaz/contratistas/crear.html', {'form': form})
+
+@login_required
+@rol_requerido("admin")
+def subir_logo_contratista(request, pk):
+    contratista = get_object_or_404(Contratista, pk=pk)
+
+    if request.method == "POST" and request.FILES.get("logo"):
+        contratista.logo = request.FILES["logo"]
+        contratista.save()
+
+    return redirect("lista_contratistas")
+
+@login_required
+@rol_requerido("admin")
+def eliminar_logo_contratista(request, pk):
+    contratista = get_object_or_404(Contratista, pk=pk)
+
+    if request.method == "POST":
+        if contratista.logo:
+            contratista.logo.delete(save=False)  # elimina archivo físico
+            contratista.logo = None
+            contratista.save()
+
+    return redirect("lista_contratistas")
+
+@login_required
+@rol_requerido("admin")
+def editar_contratista(request, pk):
+    contratista = get_object_or_404(Contratista, pk=pk)
+
+    if request.method == "POST":
+        form = ContratistaForm(request.POST, instance=contratista)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Contratista actualizada correctamente.")
+            return redirect("lista_contratistas")
+    else:
+        form = ContratistaForm(instance=contratista)
+
+    return render(request, "interfaz/contratistas/editar.html", {
+        "form": form,
+        "contratista": contratista
+    })
 
