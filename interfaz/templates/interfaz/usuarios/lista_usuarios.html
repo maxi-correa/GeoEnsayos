@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Gestión de Usuarios</h2>
+        <a href="{% url 'crear_usuario' %}" class="btn btn-primary">
+            ➕ Nuevo Usuario
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.username }}</td>
+                        <td>{{ usuario.first_name }} {{ usuario.last_name }}</td>
+                        <td>
+                            {% if usuario.is_superuser %}
+                                <span class="badge bg-dark">
+                                    <i class="bi bi-star-fill"></i> Superusuario
+                                </span>
+                            {% elif usuario.perfil.rol == "admin" %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-shield-lock"></i> Administrador
+                                </span>
+                            {% elif usuario.perfil.rol == "tecnico" %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-tools"></i> Técnico
+                                </span>
+                            {% elif usuario.perfil.rol == "consulta" %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-eye"></i> Solo consulta
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.is_active %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if request.user.is_superuser %}
+                            <a href="{% url 'editar_usuario' usuario.id %}" 
+                                class="btn btn-sm btn-outline-secondary">
+                                ✏ Editar
+                            </a>
+
+                            {% elif usuario.is_superuser %}
+                            <button class="btn btn-sm btn-secondary" disabled>
+                                🔒 Protegido
+                            </button>
+
+                            {% elif usuario.perfil.rol == "admin" and usuario != request.user %}
+                            <button class="btn btn-sm btn-secondary" disabled>
+                                🔒 Admin
+                            </button>
+
+                            {% else %}
+                            <a href="{% url 'editar_usuario' usuario.id %}" 
+                                class="btn btn-sm btn-outline-secondary">
+                                ✏ Editar
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            No hay usuarios registrados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

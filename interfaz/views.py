@@ -2,15 +2,17 @@ from pyexpat.errors import messages
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import render_to_string
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
 from django.contrib import messages
+from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.db.models import Count
+from core.models import Perfil
 from ensayos.models import Ensayo, Obra, Contratista
-from .forms import ObraForm, ContratistaForm
 from ensayos.permissions import ensayos_visibles_para
+from .forms import ObraForm, ContratistaForm
 from .decorators import rol_requerido
 from .utils import obtener_dashboard_por_rol
 
@@ -171,3 +173,95 @@ def editar_contratista(request, pk):
         "contratista": contratista
     })
 
+@login_required
+@rol_requerido('admin')
+def lista_usuarios(request):
+
+    empresa = request.user.perfil.empresa
+    usuarios = User.objects.filter(perfil__empresa=empresa)
+
+    return render(request, 'interfaz/usuarios/lista_usuarios.html', {
+        'usuarios': usuarios
+    })
+
+@login_required
+@rol_requerido('admin')
+def crear_usuario(request):
+
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
+        rol = request.POST['rol']
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "El nombre de usuario ya existe.")
+            return redirect('crear_usuario')
+
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        # Forzar que el nuevo usuario no sea superusuario
+        user.is_superuser = False
+
+        Perfil.objects.create(
+            user=user,
+            empresa=request.user.perfil.empresa,
+            rol=rol
+        )
+
+        messages.success(request, "Usuario creado correctamente.")
+        return redirect('lista_usuarios')
+
+    return render(request, 'interfaz/usuarios/crear_usuario.html')
+
+@login_required
+@rol_requerido('admin')
+def editar_usuario(request, pk):
+
+    usuario = get_object_or_404(User, pk=pk)
+    usuario_actual = request.user
+    
+    #El superusuario puede editar todo
+    if not usuario_actual.is_superuser:
+        # Si es admin
+        if usuario_actual.perfil.rol == 'admin':
+            # No puede editar superusuario
+            if usuario.is_superuser:
+                messages.error(request, "No puedes editar al superusuario.")
+                return redirect('lista_usuarios')
+            
+            # No puede editar a otro admin (que no sea el mismo)
+            if usuario.perfil.rol == 'admin' and usuario != usuario_actual:
+                messages.error(request, "No puedes editar a otro administrador.")
+                return redirect('lista_usuarios')
+
+    user = User.objects.get(id=pk)
+    perfil = user.perfil
+
+    if request.method == 'POST':
+        # Solo permitir cambiar rol si NO es el mismo usuario
+        if usuario_actual != user:
+            perfil.rol = request.POST['rol']
+
+        user.is_active = 'is_active' in request.POST
+
+        nueva_password = request.POST.get('password')
+        if nueva_password:
+            user.set_password(nueva_password)
+
+        user.save()
+        perfil.save()
+
+        messages.success(request, "Usuario actualizado.")
+        return redirect('lista_usuarios')
+
+    context = {
+        'usuario_editado': user
+    }
+
+    return render(request, 'interfaz/usuarios/editar_usuario.html', context)
