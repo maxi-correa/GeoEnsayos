@@ -47,24 +47,46 @@
                         🏢 Contratistas
                     </a>
                 </li>
+                {% if request.user.is_superuser or request.user.perfil.rol == "admin" %}
                 <li class="nav-item">
                     <a class="btn btn-outline-warning btn-sm me-2" href="{% url 'lista_usuarios' %}">
                         🛠 Gestión Usuarios
                     </a>
                 </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="btn btn-outline-danger btn-sm me-2" href="{% url 'lista_ubicaciones' %}">
+                        <i class="bi bi-geo-alt"></i> Ubicaciones
+                    </a>
+                </li>
             </ul>
 
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                <span class="nav-link">
-                    {{ request.user.username }}
-                </span>
+                <li class="nav-item me-3">
+                    <span class="nav-link d-flex align-items-center gap-2">
+
+                        <i class="bi bi-person-circle"></i>
+
+                        {{ request.user.username }}
+
+                        {% if request.user.is_superuser %}
+                            <span class="badge bg-dark">Superusuario</span>
+                        {% elif request.user.perfil.rol == "admin" %}
+                            <span class="badge bg-danger">Admin</span>
+                        {% elif request.user.perfil.rol == "tecnico" %}
+                            <span class="badge bg-primary">Técnico</span>
+                        {% elif request.user.perfil.rol == "consulta" %}
+                            <span class="badge bg-secondary">Consulta</span>
+                        {% endif %}
+
+                    </span>
                 </li>
                 <li class="nav-item">
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
-                        <button type="submit" class="nav-link btn btn-link text-danger p-0">
-                            Cerrar sesión
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Cerrar sesión">
+                            <i class="bi bi-box-arrow-right"></i>
                         </button>
                     </form>
                 </li>
@@ -83,9 +105,24 @@
 
         <div class="offcanvas-body">
 
-            <p class="fw-bold text-white">
-            {{ request.user.username }}
-            </p>
+            <div class="mb-3">
+
+                <p class="fw-bold text-white mb-1">
+                    <i class="bi bi-person-circle"></i>
+                    {{ request.user.username }}
+                </p>
+
+                {% if request.user.is_superuser %}
+                    <span class="badge bg-dark">Superusuario</span>
+                {% elif request.user.perfil.rol == "admin" %}
+                    <span class="badge bg-danger">Administrador</span>
+                {% elif request.user.perfil.rol == "tecnico" %}
+                    <span class="badge bg-primary">Técnico</span>
+                {% elif request.user.perfil.rol == "consulta" %}
+                    <span class="badge bg-secondary">Solo consulta</span>
+                {% endif %}
+
+            </div>
 
             <hr class="border-light">
 
@@ -96,15 +133,21 @@
             <a href="{% url 'lista_contratistas' %}" class="btn btn-primary w-100 mb-3">
                 🏢 Contratistas
             </a>
-
-            <a href="{% url 'lista_usuarios' %}" class="btn btn-warning  text-dark w-100 mb-3">
+            
+            {% if request.user.is_superuser or request.user.perfil.rol == "admin" %}
+            <a href="{% url 'lista_usuarios' %}" class="btn btn-warning text-dark w-100 mb-3">
                 🛠 Gestión Usuarios
             </a>
+            {% endif %}
 
+            <a href="{% url 'lista_ubicaciones' %}" class="btn btn-danger w-100 mb-3">
+                <i class="bi bi-geo-alt"></i> Ubicaciones
+            </a>
+            
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-light w-100">
-                    Cerrar sesión
+                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
                 </button>
             </form>
 

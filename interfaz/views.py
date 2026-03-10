@@ -1,3 +1,4 @@
+import json
 from pyexpat.errors import messages
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import render_to_string
@@ -6,11 +7,12 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.db.models import Count
 from core.models import Perfil
-from ensayos.models import Ensayo, Obra, Contratista
+from ensayos.models import Ensayo, Obra, Contratista, Ubicacion
 from ensayos.permissions import ensayos_visibles_para
 from .forms import ObraForm, ContratistaForm
 from .decorators import rol_requerido
@@ -44,18 +46,41 @@ def dashboard_tecnico(request):
 @rol_requerido("admin", "consulta")
 def dashboard_admin(request):
 
-    obras = (Obra.objects
-            .filter(activa = True)
-            .annotate(cantidad_ensayos = Count('muestra__ensayos'))
-            .order_by('nombre')
-            ) 
+    empresa = request.user.perfil.empresa
+
+    # OBRAS ACTIVAS
+    obras_activas_list = (
+        Obra.objects
+        .filter(activa=True, empresa=empresa)
+        .annotate(cantidad_ensayos=Count('muestra__ensayos'))
+        .order_by('nombre')
+    )
+
+    paginator_activas = Paginator(obras_activas_list, 5)
+    page_activas = request.GET.get("page_activas")
+    obras_activas = paginator_activas.get_page(page_activas)
+
+
+    # OBRAS FINALIZADAS
+    obras_finalizadas_list = (
+        Obra.objects
+        .filter(activa=False, empresa=empresa)
+        .annotate(cantidad_ensayos=Count('muestra__ensayos'))
+        .order_by('-fecha_inicio')
+    )
+
+    paginator_finalizadas = Paginator(obras_finalizadas_list, 5)
+    page_finalizadas = request.GET.get("page_finalizadas")
+    obras_finalizadas = paginator_finalizadas.get_page(page_finalizadas)
+
 
     context = {
-        'obras': obras,
-        'empresa': Obra.objects.filter(empresa=request.user.perfil.empresa, activa=True).first().empresa
+        "empresa": empresa,
+        "obras_activas": obras_activas,
+        "obras_finalizadas": obras_finalizadas,
     }
 
-    return render(request, 'interfaz/dashboard_admin.html', context)
+    return render(request, "interfaz/dashboard_admin.html", context)
 
 @login_required
 @rol_requerido("admin")
@@ -83,24 +108,29 @@ def crear_obra(request):
 
 @login_required
 @rol_requerido("admin")
-def editar_obra_modal(request, pk):
+def editar_obra(request, pk):
+
     obra = get_object_or_404(Obra, pk=pk)
 
     if request.method == "POST":
         form = ObraForm(request.POST, instance=obra)
-        
+
         if form.is_valid():
             form.save()
-            return JsonResponse({"success": True})
-        
-        html = render_to_string("obras/partials/form_editar.html", {"form": form, "obra": obra}, request=request)
-        return JsonResponse({"success": False, "html": html})
+            messages.success(request, "Obra actualizada correctamente.")
+            return redirect("dashboard_admin")
 
-    form = ObraForm(instance=obra)
+    else:
+        form = ObraForm(instance=obra)
 
-    html = render_to_string("obras/partials/form_editar.html", {"form": form, "obra": obra}, request=request)
-    
-    return JsonResponse({"html": html})
+    return render(
+        request,
+        "interfaz/editar_obra.html",
+        {
+            "form": form,
+            "obra": obra
+        }
+    )
 
 @login_required
 @rol_requerido("admin")
@@ -244,6 +274,10 @@ def editar_usuario(request, pk):
     perfil = user.perfil
 
     if request.method == 'POST':
+
+        user.first_name = request.POST['first_name']
+        user.last_name = request.POST['last_name']
+
         # Solo permitir cambiar rol si NO es el mismo usuario
         if usuario_actual != user:
             perfil.rol = request.POST['rol']
@@ -265,3 +299,66 @@ def editar_usuario(request, pk):
     }
 
     return render(request, 'interfaz/usuarios/editar_usuario.html', context)
+
+@login_required
+@rol_requerido('admin')
+def lista_ubicaciones(request):
+
+    empresa = request.user.perfil.empresa
+
+    ubicaciones = Ubicacion.objects.filter(
+        empresa=empresa
+    ).order_by('nombre')
+
+    return render(request, 'interfaz/ubicaciones/lista_ubicaciones.html', {
+        'ubicaciones': ubicaciones
+    })
+
+
+@login_required
+@rol_requerido('admin')
+def crear_ubicacion(request):
+
+    if request.method == 'POST':
+
+        nombre = request.POST['nombre']
+
+        if Ubicacion.objects.filter(nombre=nombre.upper()).exists():
+            messages.error(request, "La ubicación ya existe.")
+            return redirect('crear_ubicacion')
+
+        Ubicacion.objects.create(
+            nombre=nombre,
+            empresa=request.user.perfil.empresa
+        )
+
+        next_url = request.GET.get('next')
+
+        if next_url:
+            return redirect(next_url)
+
+        messages.success(request, "Ubicación creada correctamente.")
+        return redirect('lista_ubicaciones')
+
+    return render(request, 'interfaz/ubicaciones/crear_ubicacion.html')
+
+
+@login_required
+@rol_requerido('admin')
+def editar_ubicacion(request, pk):
+
+    ubicacion = get_object_or_404(Ubicacion, pk=pk)
+
+    if request.method == 'POST':
+
+        ubicacion.nombre = request.POST['nombre']
+        ubicacion.activa = 'activa' in request.POST
+
+        ubicacion.save()
+
+        messages.success(request, "Ubicación actualizada.")
+        return redirect('lista_ubicaciones')
+
+    return render(request, 'interfaz/ubicaciones/editar_ubicacion.html', {
+        'ubicacion': ubicacion
+    })

@@ -6,7 +6,7 @@ urlpatterns = [
     path('dashboard/admin/', views.dashboard_admin, name='dashboard_admin'),
     
     path('obras/crear/', views.crear_obra, name='crear_obra'),
-    path("obras/<int:pk>/editar-modal/", views.editar_obra_modal, name="editar_obra_modal"),
+    path('obras/<int:pk>/editar/', views.editar_obra, name='editar_obra'),
     
     path('contratistas/', views.lista_contratistas, name='lista_contratistas'),
     path('contratistas/crear/', views.crear_contratista, name='crear_contratista'),
@@ -17,4 +17,8 @@ urlpatterns = [
     path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
     path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
     path('usuarios/<int:pk>/editar/', views.editar_usuario, name='editar_usuario'),
+
+    path('ubicaciones/', views.lista_ubicaciones, name='lista_ubicaciones'),
+    path('ubicaciones/crear/', views.crear_ubicacion, name='crear_ubicacion'),
+    path('ubicaciones/<int:pk>/editar/', views.editar_ubicacion, name='editar_ubicacion'),
 ]

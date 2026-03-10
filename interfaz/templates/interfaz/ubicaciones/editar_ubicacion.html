@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<div class="card shadow-sm">
+
+<div class="card-header bg-warning">
+
+Editar Ubicación
+
+</div>
+
+<div class="card-body">
+
+<form method="post">
+
+{% csrf_token %}
+
+<div class="mb-3">
+
+<label class="form-label">Nombre</label>
+
+<input type="text"
+       name="nombre"
+       class="form-control"
+       value="{{ ubicacion.nombre }}"
+       required>
+
+</div>
+
+<div class="form-check mb-3">
+
+<input type="checkbox"
+       class="form-check-input"
+       name="activa"
+       {% if ubicacion.activa %}checked{% endif %}>
+
+<label class="form-check-label">
+
+Ubicación activa
+
+</label>
+
+</div>
+
+<button type="submit" class="btn btn-warning">
+
+Guardar cambios
+
+</button>
+
+<a href="{% url 'lista_ubicaciones' %}" class="btn btn-secondary">
+
+Volver
+
+</a>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

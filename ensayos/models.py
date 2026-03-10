@@ -20,9 +20,26 @@ class Contratista(models.Model):
         verbose_name = "Contratista"
         verbose_name_plural = "Contratistas"
 
+class Ubicacion(models.Model):
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
+    nombre = models.CharField(max_length=100, unique=True)
+    activa = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        self.nombre = self.nombre.upper()
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return self.nombre
+    
+    class Meta:
+        verbose_name = "Ubicación"
+        verbose_name_plural = "Ubicaciones"
+        ordering = ['nombre']
+
 class Cantera(models.Model):
     nombre = models.CharField(max_length=200)
-    ubicacion = models.CharField(max_length=200, blank=True)
+    ubicacion = models.ForeignKey(Ubicacion, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.nombre
@@ -49,7 +66,7 @@ class Obra(models.Model):
     numero_expediente = models.CharField(max_length=50, help_text="Ej: 3062-M-2025", blank=True, unique=True)
     tipo_contratacion = models.CharField(max_length=2, choices=TIPO_CONTRATACION, blank=True)
     numero_licitacion = models.CharField(max_length=50, blank=True, help_text="Ej: 30/2025 SIOySP", unique=True)
-    ubicacion = models.CharField(max_length=200, blank=True)
+    ubicacion = models.ForeignKey(Ubicacion, on_delete=models.SET_NULL, null=True, blank=True)
     contratista = models.ForeignKey(Contratista, on_delete=models.SET_NULL, null=True, blank=True)
     fecha_inicio = models.DateField(blank=True, null=True)
     cantera = models.ManyToManyField(Cantera, related_name="obras", blank=True)

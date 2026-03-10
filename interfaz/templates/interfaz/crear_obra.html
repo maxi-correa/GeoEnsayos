@@ -12,7 +12,16 @@
             {% for field in form %}
                 <div class="mb-3">
                     <label class="form-label">{{ field.label }}</label>
-                    {{ field }}
+                    {% if field.label == "Ubicacion" %}
+                    <div class="input-group">
+                        {{ field }}
+                        <a href="{% url 'crear_ubicacion' %}?next={{ request.path }}" class="btn btn-outline-success" title="Agregar nueva ubicacion" target="_blank">
+                            <i class="bi bi-plus-lg"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
                     {% if field.errors %}
                         <div class="text-danger small">
                             {{ field.errors }}

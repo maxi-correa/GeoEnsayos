@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from ensayos.models import Obra, Contratista
+from ensayos.models import Obra, Contratista, Ubicacion
 import re
 
 
@@ -35,6 +35,7 @@ class ObraForm(forms.ModelForm):
             'ubicacion',
             'contratista',
             'fecha_inicio',
+            'activa',
         ]
 
         widgets = {
@@ -44,15 +45,22 @@ class ObraForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-        for field in self.fields.values():
-            field.widget.attrs.update({
-                'class': 'form-control',
-                'placeholder': f"Ingrese {field.label}"
-            })
+        for name, field in self.fields.items():
+            # checkbox
+            if name == 'activa':
+                field.widget.attrs.update({
+                    'class': 'form-check-input',
+                })
+            # resto de inputs
+            else:
+                field.widget.attrs.update({
+                    'class': 'form-control',
+                    'placeholder': f"Ingrese {field.label}"
+                })
         
         self.fields["numero_expediente"].initial = "XXXX-M-XXXX"
         self.fields["numero_licitacion"].initial = "XX/XX-SIOySP"
+        self.fields["ubicacion"].queryset = Ubicacion.objects.filter(activa=True).order_by('nombre')
     
     def clean_nombre(self):
         nombre = self.cleaned_data['nombre'].upper()
