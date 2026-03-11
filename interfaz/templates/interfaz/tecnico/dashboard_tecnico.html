@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_tecnico.html" %}
 {% block content %}
 
 <div class="container mt-4">
@@ -27,9 +27,6 @@
                 <tr>
                     <th>#</th>
                     <th>Obra</th>
-                    <th>Expediente</th>
-                    <th>Tipo</th>
-                    <th>N° Licitación</th>
                     <th>Ubicación</th>
                     <th>Fecha Inicio</th>
                     <th>Contratista</th>
@@ -41,19 +38,12 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ obra.nombre }}</td>
-                    <td>{{ obra.numero_expediente }}</td>
-                    <td>{{ obra.get_tipo_contratacion_display }}</td>
-                    <td>{{ obra.numero_licitacion|default:"—" }}</td>
                     <td>{{ obra.ubicacion|default:"—" }}</td>
                     <td>{{ obra.fecha_inicio|date:"d/m/Y" }}</td>
                     <td>{{ obra.contratista|default:"—" }}</td>
 
                     <td>
                         <div class="d-flex gap-2">
-                        <!-- BOTÓN EDITAR -->
-                        <a href="{% url 'editar_obra' obra.id %}" class="btn btn-sm btn-warning">
-                            ✏
-                        </a>
                         <!-- BOTÓN VER ENSAYOS -->
                         {% if obra.cantidad_ensayos > 0 %}
                             <a href="#" class="btn btn-sm btn-primary">
@@ -69,7 +59,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center">
+                    <td colspan="6" class="text-center">
                         No hay obras registradas.
                     </td>
                 </tr>
@@ -87,9 +77,6 @@
                 <tr>
                 <th>#</th>
                 <th>Obra</th>
-                <th>Expediente</th>
-                <th>Tipo</th>
-                <th>N° Licitación</th>
                 <th>Ubicación</th>
                 <th>Fecha Inicio</th>
                 <th>Contratista</th>
@@ -102,9 +89,6 @@
             <tr>
                 <td>{{ obras_finalizadas.start_index|add:forloop.counter0 }}</td>
                 <td>{{ obra.nombre }}</td>
-                <td>{{ obra.numero_expediente }}</td>
-                <td>{{ obra.get_tipo_contratacion_display }}</td>
-                <td>{{ obra.numero_licitacion|default:"—" }}</td>
                 <td>{{ obra.ubicacion|default:"—" }}</td>
                 <td>{{ obra.fecha_inicio|date:"d/m/Y" }}</td>
                 <td>{{ obra.contratista|default:"—" }}</td>
@@ -125,7 +109,7 @@
             </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center">
+                    <td colspan="6" class="text-center">
                         No hay obras finalizadas.
                     </td>
                 </tr>

@@ -1,46 +1,24 @@
 import json
 from pyexpat.errors import messages
 from django.shortcuts import redirect, render, get_object_or_404
-from django.template.loader import render_to_string
-from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.db.models import Count
 from core.models import Perfil
-from ensayos.models import Ensayo, Obra, Contratista, Ubicacion
-from ensayos.permissions import ensayos_visibles_para
-from .forms import ObraForm, ContratistaForm
-from .decorators import rol_requerido
-from .utils import obtener_dashboard_por_rol
+from ensayos.models import Obra, Contratista, Ubicacion
+from ..forms import ObraForm, ContratistaForm
+from ..decorators import rol_requerido
+from ..utils import obtener_dashboard_por_rol
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
 
     def get_success_url(self):
         return reverse_lazy(obtener_dashboard_por_rol(self.request.user))
-
-
-@login_required
-@rol_requerido("tecnico")
-def dashboard_tecnico(request):
-    
-    # Ensayos visibles según el rol (usamos permissions)
-    ensayos = ensayos_visibles_para(request.user)
-
-    context = {
-        'pendientes' : ensayos.filter(estado=Ensayo.ESTADO_PENDIENTE).count(),
-        'en_proceso' : ensayos.filter(estado=Ensayo.ESTADO_EN_PROCESO).count(),
-        'finalizados' : ensayos.filter(estado=Ensayo.ESTADO_FINALIZADO).count(),
-        'validados' : ensayos.filter(estado=Ensayo.ESTADO_VALIDADO).count(),
-        'obras' : Obra.objects.filter(empresa=request.user.perfil.empresa, activa=True),
-    }
-
-    return render(request, 'interfaz/dashboard_tecnico.html', context)
 
 @login_required
 @rol_requerido("admin", "consulta")
@@ -80,7 +58,7 @@ def dashboard_admin(request):
         "obras_finalizadas": obras_finalizadas,
     }
 
-    return render(request, "interfaz/dashboard_admin.html", context)
+    return render(request, "interfaz/admin/dashboard_admin.html", context)
 
 @login_required
 @rol_requerido("admin")
@@ -104,7 +82,7 @@ def crear_obra(request):
     else:
         form = ObraForm()
         
-    return render(request, 'interfaz/crear_obra.html', {'form': form})
+    return render(request, 'interfaz/admin/obras/crear_obra.html', {'form': form})
 
 @login_required
 @rol_requerido("admin")
@@ -125,7 +103,7 @@ def editar_obra(request, pk):
 
     return render(
         request,
-        "interfaz/editar_obra.html",
+        "interfaz/admin/obras/editar_obra.html",
         {
             "form": form,
             "obra": obra
@@ -141,7 +119,7 @@ def lista_contratistas(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    return render(request, "interfaz/contratistas/lista.html", {
+    return render(request, "interfaz/admin/contratistas/lista.html", {
         "page_obj": page_obj
     })
 
@@ -158,7 +136,7 @@ def crear_contratista(request):
     else:
         form = ContratistaForm() #Acá se instancia el form vacío para mostrarlo en la plantilla
         
-    return render(request, 'interfaz/contratistas/crear.html', {'form': form})
+    return render(request, 'interfaz/admin/contratistas/crear.html', {'form': form})
 
 @login_required
 @rol_requerido("admin")
@@ -198,7 +176,7 @@ def editar_contratista(request, pk):
     else:
         form = ContratistaForm(instance=contratista)
 
-    return render(request, "interfaz/contratistas/editar.html", {
+    return render(request, "interfaz/admin/contratistas/editar.html", {
         "form": form,
         "contratista": contratista
     })
@@ -210,7 +188,7 @@ def lista_usuarios(request):
     empresa = request.user.perfil.empresa
     usuarios = User.objects.filter(perfil__empresa=empresa)
 
-    return render(request, 'interfaz/usuarios/lista_usuarios.html', {
+    return render(request, 'interfaz/admin/usuarios/lista_usuarios.html', {
         'usuarios': usuarios
     })
 
@@ -247,7 +225,7 @@ def crear_usuario(request):
         messages.success(request, "Usuario creado correctamente.")
         return redirect('lista_usuarios')
 
-    return render(request, 'interfaz/usuarios/crear_usuario.html')
+    return render(request, 'interfaz/admin/usuarios/crear_usuario.html')
 
 @login_required
 @rol_requerido('admin')
@@ -282,11 +260,27 @@ def editar_usuario(request, pk):
         if usuario_actual != user:
             perfil.rol = request.POST['rol']
 
-        user.is_active = 'is_active' in request.POST
+        # Solo permitir activar/desactivar si NO es el mismo usuario
+        if usuario_actual != user:
+            user.is_active = 'is_active' in request.POST
 
         nueva_password = request.POST.get('password')
         if nueva_password:
             user.set_password(nueva_password)
+
+        # Forzar a que nunca se desactive el último admin
+        if usuario_actual != user:
+            nuevo_estado = 'is_active' in request.POST
+
+            # Si se intenta desactivar un admin
+            if not nuevo_estado and perfil.rol == 'admin':
+                admins_activos = User.objects.filter(perfil_rol='admin', is_active=True).exclude(id=user.id)
+                
+                if not admins_activos.exists():
+                    messages.error(request, "No puedes desactivar al último administrador.")
+                    return redirect('lista_usuarios')
+            
+            user.is_active = nuevo_estado
 
         user.save()
         perfil.save()
@@ -298,7 +292,7 @@ def editar_usuario(request, pk):
         'usuario_editado': user
     }
 
-    return render(request, 'interfaz/usuarios/editar_usuario.html', context)
+    return render(request, 'interfaz/admin/usuarios/editar_usuario.html', context)
 
 @login_required
 @rol_requerido('admin')
@@ -310,7 +304,7 @@ def lista_ubicaciones(request):
         empresa=empresa
     ).order_by('nombre')
 
-    return render(request, 'interfaz/ubicaciones/lista_ubicaciones.html', {
+    return render(request, 'interfaz/admin/ubicaciones/lista_ubicaciones.html', {
         'ubicaciones': ubicaciones
     })
 
@@ -340,7 +334,7 @@ def crear_ubicacion(request):
         messages.success(request, "Ubicación creada correctamente.")
         return redirect('lista_ubicaciones')
 
-    return render(request, 'interfaz/ubicaciones/crear_ubicacion.html')
+    return render(request, 'interfaz/admin/ubicaciones/crear_ubicacion.html')
 
 
 @login_required
@@ -359,6 +353,6 @@ def editar_ubicacion(request, pk):
         messages.success(request, "Ubicación actualizada.")
         return redirect('lista_ubicaciones')
 
-    return render(request, 'interfaz/ubicaciones/editar_ubicacion.html', {
+    return render(request, 'interfaz/admin/ubicaciones/editar_ubicacion.html', {
         'ubicacion': ubicacion
     })

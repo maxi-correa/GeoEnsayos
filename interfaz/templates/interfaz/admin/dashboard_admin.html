@@ -1,0 +1,163 @@
+{% extends "base_admin.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="text-center my-4">{{ empresa.nombre }}</h1>
+
+    <ul class="nav nav-tabs mt-4" id="obrasTabs">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#activas">
+                Obras Activas
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizadas">
+                Obras Finalizadas
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+
+        <div class="tab-pane fade show active" id="activas">
+        <div class = "table-responsive">
+        <table class="table table-striped table-hover mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Obra</th>
+                    <th>Expediente</th>
+                    <th>Tipo</th>
+                    <th>N° Licitación</th>
+                    <th>Ubicación</th>
+                    <th>Fecha Inicio</th>
+                    <th>Contratista</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obra in obras_activas %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ obra.nombre }}</td>
+                    <td>{{ obra.numero_expediente }}</td>
+                    <td>{{ obra.get_tipo_contratacion_display }}</td>
+                    <td>{{ obra.numero_licitacion|default:"—" }}</td>
+                    <td>{{ obra.ubicacion|default:"—" }}</td>
+                    <td>{{ obra.fecha_inicio|date:"d/m/Y" }}</td>
+                    <td>{{ obra.contratista|default:"—" }}</td>
+
+                    <td>
+                        <div class="d-flex gap-2">
+                        <!-- BOTÓN EDITAR -->
+                        <a href="{% url 'editar_obra' obra.id %}" class="btn btn-sm btn-warning">
+                            ✏
+                        </a>
+                        <!-- BOTÓN VER ENSAYOS -->
+                        {% if obra.cantidad_ensayos > 0 %}
+                            <a href="#" class="btn btn-sm btn-primary">
+                                Ver Ensayos
+                            </a>
+                        {% else %}
+                            <button class="btn btn-sm btn-secondary" disabled>
+                                Ver Ensayos
+                            </button>
+                        {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center">
+                        No hay obras registradas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "interfaz/partials/paginador.html" with page_obj=obras_activas  page_param="page_activas" tab="activas" %}
+        </div>
+        </div>
+
+        <div class="tab-pane fade" id="finalizadas">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mt-3">
+            <thead class="table-dark">
+                <tr>
+                <th>#</th>
+                <th>Obra</th>
+                <th>Expediente</th>
+                <th>Tipo</th>
+                <th>N° Licitación</th>
+                <th>Ubicación</th>
+                <th>Fecha Inicio</th>
+                <th>Contratista</th>
+                <th>Acción</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for obra in obras_finalizadas %}
+            <tr>
+                <td>{{ obras_finalizadas.start_index|add:forloop.counter0 }}</td>
+                <td>{{ obra.nombre }}</td>
+                <td>{{ obra.numero_expediente }}</td>
+                <td>{{ obra.get_tipo_contratacion_display }}</td>
+                <td>{{ obra.numero_licitacion|default:"—" }}</td>
+                <td>{{ obra.ubicacion|default:"—" }}</td>
+                <td>{{ obra.fecha_inicio|date:"d/m/Y" }}</td>
+                <td>{{ obra.contratista|default:"—" }}</td>
+
+                <td>
+                <div class="d-flex gap-2">
+                    {% if obra.cantidad_ensayos > 0 %}
+                    <a href="#" class="btn btn-sm btn-primary">
+                    Ver Ensayos
+                    </a>
+                    {% else %}
+                    <button class="btn btn-sm btn-secondary" disabled>
+                    Ver Ensayos
+                    </button>
+                    {% endif %}
+                </div>
+                </td>
+            </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center">
+                        No hay obras finalizadas.
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+            {% include "interfaz/partials/paginador.html" with page_obj=obras_finalizadas  page_param="page_finalizadas" tab="finalizadas" %}
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function(){
+
+        const params = new URLSearchParams(window.location.search)
+        const tab = params.get("tab")
+
+        if(tab){
+
+            const trigger = document.querySelector(`button[data-bs-target="#${tab}"]`)
+
+            if(trigger){
+                const tabBootstrap = new bootstrap.Tab(trigger)
+                tabBootstrap.show()
+            }
+        }
+    })
+</script>
+
+{% endblock %}
